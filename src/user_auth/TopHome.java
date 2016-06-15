@@ -5,17 +5,30 @@
  */
 package user_auth;
 
+import subs_control.SubsHome;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author AlbertusK95
  */
 public class TopHome extends javax.swing.JFrame {
 
+    private final String path_to_subslist = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\subs_list.txt";
+    private String loginUsername;
+    private String loginPassword;
+    
     /**
      * Creates new form TopHome
      */
     public TopHome() {
         initComponents();
+        loginUsername = null;
+        loginPassword = null;
     }
 
     /**
@@ -49,12 +62,22 @@ public class TopHome extends javax.swing.JFrame {
 
         btnLogin.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
         btnLogin.setText("Login");
+        btnLogin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLoginActionPerformed(evt);
+            }
+        });
 
         labelnoaccountyet.setFont(new java.awt.Font("Cambria", 1, 12)); // NOI18N
         labelnoaccountyet.setText("Doesn't have any account yet?");
 
         btnRegister.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
         btnRegister.setText("Register");
+        btnRegister.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRegisterActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -65,16 +88,13 @@ public class TopHome extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(labelUsernameLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(labelPasswordLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(50, 50, 50)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtUsernameLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtPasswordLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(btnLogin)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtUsernameLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtPasswordLogin))))
+                        .addGap(100, 100, 100)))
                 .addContainerGap(63, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -102,9 +122,9 @@ public class TopHome extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(labelPasswordLogin)
                     .addComponent(txtPasswordLogin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(32, 32, 32)
-                .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(33, 33, 33)
+                .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(32, 32, 32)
                 .addComponent(labelnoaccountyet)
                 .addGap(18, 18, 18)
                 .addComponent(btnRegister, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -114,6 +134,82 @@ public class TopHome extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
+        // TODO add your handling code here:
+        int loginStatus = 0;
+        String[] args = {};
+        
+        if (loginUsername == null || loginPassword == null) {
+             JOptionPane.showMessageDialog(this, "You must fill username and password", "Invalid login", JOptionPane.ERROR_MESSAGE);
+        } else {
+            loginUsername = txtUsernameLogin.getText();
+            loginPassword = txtPasswordLogin.getText();
+            
+            try {
+                SubscriberValidation sv = new SubscriberValidation();
+                loginStatus = sv.validate();
+                if (loginStatus == 1) {
+                    JOptionPane.showMessageDialog(this, "You're successfully login", "Valid login", JOptionPane.PLAIN_MESSAGE);
+                    SubsHome.main(args);
+                    this.setVisible(false);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Invalid username or password", "Invalid login", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        }
+    }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
+        // TODO add your handling code here:
+        String[] args = {};
+        
+        RegisterHome.main(args);
+        this.setVisible(false);
+    }//GEN-LAST:event_btnRegisterActionPerformed
+
+    /**
+     * Class yang akan menangani semua masalah berkaitan dengan subscriber
+     */
+    private class SubscriberValidation {
+        
+        public int validate() throws IOException {    
+            BufferedReader br = null;
+            String sCurrentLine;
+            String[] subsInfo = new String[2];
+            int validStatus = 0, sInfoCol = 0;
+            
+            try {
+                br = new BufferedReader(new FileReader(path_to_subslist));
+                while ((sCurrentLine = br.readLine()) != null) {
+                    sInfoCol = 0;
+                    for (String val: sCurrentLine.split(" ")){
+                        subsInfo[sInfoCol] = val;
+                        sInfoCol++;
+                    }
+                    // cek kesamaan username dan password
+                    if (loginUsername.equals(subsInfo[0]) && loginPassword.equals(subsInfo[1])) {
+                        validStatus = 1;
+                        break;
+                    } 
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            }
+            
+            return validStatus;
+        }
+        
+    }
+    
     /**
      * @param args the command line arguments
      */

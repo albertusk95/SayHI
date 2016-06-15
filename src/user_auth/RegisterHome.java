@@ -5,17 +5,31 @@
  */
 package user_auth;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author AlbertusK95
  */
 public class RegisterHome extends javax.swing.JFrame {
 
+    private final String path_to_subsList = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\subs_list.txt";
+    private String registerFirstName;
+    private String registerLastName;
+    private String registerUsername;
+    private String registerPassword;
+    
     /**
      * Creates new form RegisterHome
      */
     public RegisterHome() {
-        initComponents();
+        initComponents();  
     }
 
     /**
@@ -61,6 +75,11 @@ public class RegisterHome extends javax.swing.JFrame {
 
         btnRegister.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
         btnRegister.setText("Register");
+        btnRegister.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRegisterActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -124,6 +143,161 @@ public class RegisterHome extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    public boolean isFilled() {
+        if (registerFirstName.equals("") || registerLastName.equals("") || registerUsername.equals("") || registerPassword.equals("")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    
+    private void btnRegisterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegisterActionPerformed
+        // TODO add your handling code here:
+        
+        int uniqueUsername = 0;
+        
+        registerFirstName = txtFirstNameReg.getText();
+        registerLastName = txtLastNameReg.getText();
+        registerUsername = txtUsernameReg.getText();
+        registerPassword = txtPasswordReg.getText();
+        
+        if (!isFilled()) {
+            JOptionPane.showMessageDialog(this, "You must fill all the fields", "Invalid registration", JOptionPane.ERROR_MESSAGE);
+        } else {
+            
+            /**
+             * Menjalankan prosedur penginputan data milik subscriber baru, yaitu:
+             * - mengecek apakah username sudah pernah ada di dalam database
+             * - insert data baru ke dalam database
+             */
+            
+            try {
+                RegistrationProtocol rp = new RegistrationProtocol();
+                uniqueUsername = rp.isUniqueUsername();
+                if (uniqueUsername == 1) {
+                    rp.insertData();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Username has already been used", "Invalid username", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        }
+        
+    }//GEN-LAST:event_btnRegisterActionPerformed
+
+    /**
+     * Class RegistrationProtocol
+     */
+    private class RegistrationProtocol {
+        
+        public boolean isSubsFileEmpty() {
+            BufferedReader br = null;
+            boolean isEmpty = false;
+
+            try {
+                File file = new File(path_to_subsList);
+
+                // jika file tidak ada, maka akan dibuat
+                if (!file.exists()) {
+                    System.out.println("File doesn't exist. Creating a new one");
+                    file.createNewFile();
+                }
+
+                br = new BufferedReader(new FileReader(path_to_subsList));     
+                if (br.readLine() == null) {
+                    System.out.println("File of subscriber list is empty");
+                    isEmpty = true;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return isEmpty;
+        }
+        
+        public int isUniqueUsername() throws IOException {
+            BufferedReader br = null;
+            String[] userInfo = new String[4];
+            String sCurrentLine;
+            int uniqueStatus = 1, userInfoCol = 0;
+            
+            try {
+                    br = new BufferedReader(new FileReader(path_to_subsList));
+                    while ((sCurrentLine = br.readLine()) != null) {
+                        userInfoCol = 0;
+                        for (String val: sCurrentLine.split(" ")){
+                            userInfo[userInfoCol] = val;
+                            userInfoCol++;
+                        }
+                        // cek kesamaan username
+                        if (userInfo[2].equals(registerUsername)) {
+                            uniqueStatus = 0;
+                            break;
+                        }
+                    }
+            } catch (IOException e) {
+                    e.printStackTrace();
+            } finally {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            }
+            
+            return uniqueStatus;
+        }
+        
+        public void insertData() {
+            
+            try {
+                File file = new File(path_to_subsList);
+
+                // jika file tidak ada, maka akan dibuat
+                if (!file.exists()) {
+                    System.out.println("File doesn't exist. Creating a new one");
+                    file.createNewFile();
+                }
+
+                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                if (isSubsFileEmpty()) {
+                    bw.write(registerFirstName);
+                    bw.write(" ");
+                    bw.write(registerLastName);
+                    bw.write(" ");
+                    bw.write(registerUsername);
+                    bw.write(" ");
+                    bw.write(registerPassword);
+                } else {
+                    bw.newLine();
+                    bw.write(registerFirstName);
+                    bw.write(" ");
+                    bw.write(registerLastName);
+                    bw.write(" ");
+                    bw.write(registerUsername);
+                    bw.write(" ");
+                    bw.write(registerPassword);
+                }
+                bw.close();
+
+                System.out.println("Successfully adding new subscriber's data");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        }
+        
+    }
+    
     /**
      * @param args the command line arguments
      */
