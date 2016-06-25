@@ -5,7 +5,7 @@
  */
 package user_auth;
 
-import subs_control.SubsHome;
+import subs_control.TopSubs;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,8 +27,6 @@ public class TopHome extends javax.swing.JFrame {
      */
     public TopHome() {
         initComponents();
-        loginUsername = null;
-        loginPassword = null;
     }
 
     /**
@@ -137,9 +135,9 @@ public class TopHome extends javax.swing.JFrame {
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // TODO add your handling code here:
         int loginStatus = 0;
-        String[] args = {};
+        String[] args = new String[1];
         
-        if (loginUsername == null || loginPassword == null) {
+        if (txtUsernameLogin.equals("") || txtPasswordLogin.equals("")) {
              JOptionPane.showMessageDialog(this, "You must fill username and password", "Invalid login", JOptionPane.ERROR_MESSAGE);
         } else {
             loginUsername = txtUsernameLogin.getText();
@@ -150,7 +148,8 @@ public class TopHome extends javax.swing.JFrame {
                 loginStatus = sv.validate();
                 if (loginStatus == 1) {
                     JOptionPane.showMessageDialog(this, "You're successfully login", "Valid login", JOptionPane.PLAIN_MESSAGE);
-                    SubsHome.main(args);
+                    args[0] = loginUsername;
+                    TopSubs.main(args);
                     this.setVisible(false);
                 } else {
                     JOptionPane.showMessageDialog(this, "Invalid username or password", "Invalid login", JOptionPane.ERROR_MESSAGE);
@@ -178,7 +177,7 @@ public class TopHome extends javax.swing.JFrame {
         public int validate() throws IOException {    
             BufferedReader br = null;
             String sCurrentLine;
-            String[] subsInfo = new String[2];
+            String[] subsInfo = new String[4];
             int validStatus = 0, sInfoCol = 0;
             
             try {
@@ -190,7 +189,7 @@ public class TopHome extends javax.swing.JFrame {
                         sInfoCol++;
                     }
                     // cek kesamaan username dan password
-                    if (loginUsername.equals(subsInfo[0]) && loginPassword.equals(subsInfo[1])) {
+                    if (loginUsername.equals(subsInfo[2]) && loginPassword.equals(subsInfo[3])) {
                         validStatus = 1;
                         break;
                     } 

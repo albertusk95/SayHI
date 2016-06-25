@@ -19,6 +19,7 @@ import javax.swing.JOptionPane;
  */
 public class RegisterHome extends javax.swing.JFrame {
 
+    private final String path_to_users = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\";
     private final String path_to_subsList = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\subs_list.txt";
     private String registerFirstName;
     private String registerLastName;
@@ -289,7 +290,40 @@ public class RegisterHome extends javax.swing.JFrame {
                 }
                 bw.close();
 
-                System.out.println("Successfully adding new subscriber's data");
+                // membuat direktori baru untuk user yang baru terdaftar
+                File regUser_directory = new File(path_to_users + registerUsername);
+                if (!regUser_directory.exists()) {
+                    if (regUser_directory.mkdir()) {
+                        
+                        System.out.println("User's data area is created");
+                        
+                        // membuat file friends list dan chat history
+                        try {
+    		 
+                            File fileFriendsList = new File(path_to_users + registerUsername + "\\friendlist.txt");
+                            if (fileFriendsList.createNewFile()){
+                                System.out.println("Friends list file is created");
+                            }else{
+                                System.out.println("Friends list file already exists");
+                            }
+                            
+                            File fileChatHistory = new File(path_to_users + registerUsername + "\\chathistory.txt");
+                            if (fileChatHistory.createNewFile()){
+                                System.out.println("Chat history file is created");
+                            }else{
+                                System.out.println("Chat history already exists");
+                            }
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                       
+                    } else {
+                        // menampilkan pesan error dalam proses registrasi user baru
+                        System.out.println("Failed to create user's data area");
+                    }
+                }
+                
             } catch (IOException e) {
                 e.printStackTrace();
             }

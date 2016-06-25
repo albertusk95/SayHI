@@ -5,19 +5,197 @@
  */
 package subs_control;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.List;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author AlbertusK95
  */
 public class SubsHome extends javax.swing.JFrame {
 
+    private final String path_to_users = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\";
+    private final String path_to_subslist = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\subs_list.txt";
+    private final String hostname, username;
+    private final int listeningPort;
+
+    private List<String> clients;
+    private List<PrivChatDialog> dialogs;
+    
+    private int numFriendsList;
+    
+    private ObjectInputStream input;
+    private ObjectOutputStream output;
+    private Socket socket;
+    
     /**
      * Creates new form SubsHome
+     * @param username
      */
-    public SubsHome() {
+    public SubsHome(String hostname, int listeningPort, String username) {
+        boolean startVal;
+        this.hostname = hostname;
+        this.listeningPort = listeningPort;
+        this.username = username;
         initComponents();
+        initFriendsList();
+        initChatHistory();
+        initGlobalFriends();
+        //startVal = start();
     }
-
+    
+    /*
+    private boolean start() {
+        try {
+            socket = new Socket(hostname, listeningPort);
+        } catch (Exception ec) {
+            System.out.println("Error connectiong to server:" + ec);
+            return false;
+        }
+ 
+        String msg = "Connection accepted " + socket.getInetAddress() + ":" + socket.getPort();
+        System.out.println(msg);
+ 
+        try {
+            input = new ObjectInputStream(socket.getInputStream());
+            output = new ObjectOutputStream(socket.getOutputStream());
+        } catch (IOException eIO) {
+            System.out.println("Exception creating new Input/output Streams: " + eIO);
+            return false;
+        }
+ 
+        new SubsHome.ListenFromServer().start();
+ 
+        try {
+            output.writeObject("login~" + username + "~" + username + " sedang login...~server~\n");
+            output.writeObject("list~" + username + "~" + username + " sedang login...~server~\n");
+ 
+        } catch (IOException eIO) {
+            System.out.println("Exception doing login : " + eIO);
+            disconnect();
+            return false;
+        }
+ 
+        return true;
+    }
+    
+    private void disconnect() {
+        try {
+            // TODO add your handling code here:
+            output.writeObject("logout~" + username + "~" + username + " sudah logout...~Server~\n");
+        } catch (IOException ex) {
+            //Logger.getLogger(ChatClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+ 
+        try {
+            if (input != null) {
+                input.close();
+            }
+        } catch (Exception e) {}
+        
+        try {
+            if (output != null) {
+                output.close();
+            }
+        } catch (Exception e) {}
+        
+        try {
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (Exception e) {}
+    }
+    */
+    
+    /**
+     * Initiate friends list, chat's history, and global friends
+     */
+    private void initFriendsList() {
+        
+    }
+    
+    private void initChatHistory() {
+        
+    }
+    
+    private void initGlobalFriends() {
+        BufferedReader br0 = null;
+        BufferedReader br1 = null;
+        String[] GlobFriends;
+        String tempInfo;
+        int indexGlobFriends = 0;
+        int numGlobFriends = 0;
+        
+        try {
+            br0 = new BufferedReader(new FileReader(path_to_subslist));
+            while (br0.readLine() != null) {
+                numGlobFriends++;
+            }
+            
+            System.out.println("Total glob friends: " + numGlobFriends);
+            
+            GlobFriends = new String[numGlobFriends];
+             
+            br1 = new BufferedReader(new FileReader(path_to_subslist));
+            while ((tempInfo = br1.readLine()) != null) {
+                if (!tempInfo.split(" ")[2].equals(username)) {
+                    GlobFriends[indexGlobFriends] = tempInfo;
+                    indexGlobFriends++;
+                    
+                    System.out.println("Username glob friends: " + tempInfo.split(" ")[2]);
+                }
+            }
+            
+            Object[][] data = new Object[numGlobFriends - 1][2];
+            String[] header = {"ID", "Full Name"};
+            int idxSplitted;
+            
+            // mengisi objek data dengan semua user yang terdaftar dalam database
+            for (int i = 0; i < numGlobFriends - 1; i++) {
+                idxSplitted = 0;
+                data[i][1] = "";
+                for (String splittedVal: GlobFriends[i].split(" ")){
+                    if (idxSplitted < 2) {
+                        data[i][1] = data[i][1] + splittedVal;
+                        if (idxSplitted == 0) {
+                            data[i][1] = data[i][1] + " ";
+                        }
+                    } else if (idxSplitted == 2) {
+                        data[i][0] = splittedVal;
+                    }
+                    idxSplitted++;
+                }
+            }
+        
+            tabelGlobalFriends.setModel(new DefaultTableModel(data, header) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            });
+        
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br0.close();
+                br1.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -27,22 +205,328 @@ public class SubsHome extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tabelFriendsList = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tabelChatHistory = new javax.swing.JTable();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        tabelGlobalFriends = new javax.swing.JTable();
+        panelChatControl = new javax.swing.JPanel();
+        btnDeleteChat = new javax.swing.JButton();
+        panelGlobalAddControl = new javax.swing.JPanel();
+        btnAddFriend = new javax.swing.JButton();
+        panelFriendsListControl = new javax.swing.JPanel();
+        btnDeleteFriend = new javax.swing.JButton();
+
+        jLabel1.setText("jLabel1");
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jScrollPane1.setFont(new java.awt.Font("Cambria", 1, 12)); // NOI18N
+
+        tabelFriendsList.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "ID", "Full Name"
+            }
+        ));
+        jScrollPane1.setViewportView(tabelFriendsList);
+
+        tabelChatHistory.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null},
+                {null},
+                {null}
+            },
+            new String [] {
+                "Chat's history"
+            }
+        ));
+        jScrollPane2.setViewportView(tabelChatHistory);
+
+        tabelGlobalFriends.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "ID", "Full Name"
+            }
+        ));
+        jScrollPane3.setViewportView(tabelGlobalFriends);
+
+        panelChatControl.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Chat's history control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Cambria", 1, 14))); // NOI18N
+
+        btnDeleteChat.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
+        btnDeleteChat.setText("Delete");
+
+        javax.swing.GroupLayout panelChatControlLayout = new javax.swing.GroupLayout(panelChatControl);
+        panelChatControl.setLayout(panelChatControlLayout);
+        panelChatControlLayout.setHorizontalGroup(
+            panelChatControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelChatControlLayout.createSequentialGroup()
+                .addGap(70, 70, 70)
+                .addComponent(btnDeleteChat)
+                .addContainerGap(86, Short.MAX_VALUE))
+        );
+        panelChatControlLayout.setVerticalGroup(
+            panelChatControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelChatControlLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(btnDeleteChat, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        panelGlobalAddControl.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Global friends control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Cambria", 1, 14))); // NOI18N
+
+        btnAddFriend.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
+        btnAddFriend.setText("Add");
+        btnAddFriend.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnAddFriendActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout panelGlobalAddControlLayout = new javax.swing.GroupLayout(panelGlobalAddControl);
+        panelGlobalAddControl.setLayout(panelGlobalAddControlLayout);
+        panelGlobalAddControlLayout.setHorizontalGroup(
+            panelGlobalAddControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelGlobalAddControlLayout.createSequentialGroup()
+                .addGap(70, 70, 70)
+                .addComponent(btnAddFriend, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        panelGlobalAddControlLayout.setVerticalGroup(
+            panelGlobalAddControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelGlobalAddControlLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(btnAddFriend, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        panelFriendsListControl.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Friends list control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Cambria", 1, 14))); // NOI18N
+
+        btnDeleteFriend.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
+        btnDeleteFriend.setText("Delete");
+
+        javax.swing.GroupLayout panelFriendsListControlLayout = new javax.swing.GroupLayout(panelFriendsListControl);
+        panelFriendsListControl.setLayout(panelFriendsListControlLayout);
+        panelFriendsListControlLayout.setHorizontalGroup(
+            panelFriendsListControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelFriendsListControlLayout.createSequentialGroup()
+                .addGap(68, 68, 68)
+                .addComponent(btnDeleteFriend)
+                .addContainerGap(88, Short.MAX_VALUE))
+        );
+        panelFriendsListControlLayout.setVerticalGroup(
+            panelFriendsListControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelFriendsListControlLayout.createSequentialGroup()
+                .addContainerGap(13, Short.MAX_VALUE)
+                .addComponent(btnDeleteFriend, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(29, 29, 29)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(panelChatControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(panelFriendsListControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(29, 29, 29))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(37, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(46, 46, 46))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(panelFriendsListControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(panelChatControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(34, 34, 34))))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Prosedur mendapatkan isi dari file FriendList.txt
+     */
+    private String[] GET_FriendList() {
+        BufferedReader br0 = null;
+        BufferedReader br1 = null;
+        int indexFriendsList = 0;
+        String[] FriendsList = {};
+        String tempInfo;
+        
+        // mengambil isi friends list dari database
+        try {
+            numFriendsList = 0;
+            
+            br0 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
+            while (br0.readLine() != null) {
+                numFriendsList++;
+            }
+            
+            System.out.println("Friends list counted: " + numFriendsList);
+
+            FriendsList = new String[numFriendsList];
+            
+            br1 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
+            while ((tempInfo = br1.readLine()) != null) {
+                FriendsList[indexFriendsList] = tempInfo;
+                indexFriendsList++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br0.close();
+                br1.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return FriendsList;
+    }
+    
+    /**
+     * Prosedur mengecek apakah file friendlist.txt kosong atau tidak
+     */
+    private boolean isSubsFileEmpty(String userID) {
+        BufferedReader br = null;
+        boolean isEmpty = false;
+
+        try {
+            br = new BufferedReader(new FileReader(path_to_users + userID + "\\friendlist.txt"));     
+            if (br.readLine() == null) {
+                System.out.println("File friendlist.txt is empty");
+                isEmpty = true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return isEmpty;
+    }
+
+    /**
+     * Prosedur menambahkan seorang global friend ke dalam file friendlist.txt
+     */
+    private void addFriendToFile(String friendID, String friendFullName) {
+            String friendFirstName = friendFullName.split(" ")[0];
+            String friendLastName = friendFullName.split(" ")[1];
+            
+            try {
+                File file = new File(path_to_users + username + "\\friendlist.txt");
+
+                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                if (isSubsFileEmpty(friendID)) {
+                    bw.write(friendID);
+                    bw.write(" ");
+                    bw.write(friendFirstName);
+                    bw.write(" ");
+                    bw.write(friendLastName);
+                } else {
+                    bw.newLine();
+                    bw.write(friendID);
+                    bw.write(" ");
+                    bw.write(friendFirstName);
+                    bw.write(" ");
+                    bw.write(friendLastName);
+                }
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
+    
+    /**
+     * Prosedur menambahkan user dari Global Friends ke dalam daftar pertemanan seorang user
+     * @param evt 
+     */
+    private void btnAddFriendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddFriendActionPerformed
+        // TODO add your handling code here:
+        String[] FriendsList;
+        int idxRow = tabelGlobalFriends.getSelectedRow();
+        
+        if(idxRow != -1) {
+            // mengambil username dan fullname dari user yang dipilih
+            String clickedElmt_ID = (tabelGlobalFriends.getModel().getValueAt(idxRow, 0).toString());
+            String clickedElmt_FullName = (tabelGlobalFriends.getModel().getValueAt(idxRow, 1).toString());
+            
+            System.out.println("Selected: " + clickedElmt_ID + " " + clickedElmt_FullName);
+            
+            // menambahkan ke dalam file friends list
+            addFriendToFile(clickedElmt_ID, clickedElmt_FullName);
+            
+            // menambahkan ke dalam tabel friends list
+            FriendsList = GET_FriendList();
+            Object[][] data = new Object[numFriendsList][2];
+            String[] header = {"ID", "Full Name"};
+            int idxSplitted;
+            
+            // mengisi objek data dengan semua user yang terdaftar dalam database
+            for (int i = 0; i < numFriendsList; i++) {
+                idxSplitted = 0;
+                data[i][1] = "";
+                for (String splittedVal: FriendsList[i].split(" ")){
+                    if (idxSplitted == 0) {
+                        data[i][0] = splittedVal;
+                    }
+                    else {
+                        data[i][1] = data[i][1] + splittedVal;
+                        if (idxSplitted == 1) {
+                            data[i][1] = data[i][1] + " ";
+                        }
+                    } 
+                    idxSplitted++;
+                }
+            }
+        
+            tabelFriendsList.setModel(new DefaultTableModel(data, header) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            });
+        }
+    }//GEN-LAST:event_btnAddFriendActionPerformed
+
+    
     /**
      * @param args the command line arguments
      */
@@ -73,11 +557,115 @@ public class SubsHome extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SubsHome().setVisible(true);
+                new SubsHome(args[0], Integer.parseInt(args[1]), args[2]).setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAddFriend;
+    private javax.swing.JButton btnDeleteChat;
+    private javax.swing.JButton btnDeleteFriend;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JPanel panelChatControl;
+    private javax.swing.JPanel panelFriendsListControl;
+    private javax.swing.JPanel panelGlobalAddControl;
+    private javax.swing.JTable tabelChatHistory;
+    private javax.swing.JTable tabelFriendsList;
+    private javax.swing.JTable tabelGlobalFriends;
     // End of variables declaration//GEN-END:variables
+
+    /*
+    class ListenFromServer extends Thread {
+ 
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    String msg = (String) input.readObject();
+                    String res;
+                    String type = msg.split("~")[0];
+                    String pengirim = msg.split("~")[1];
+                    String text = msg.split("~")[2];
+                    String kepada = msg.split("~")[3];
+                    switch (type) {
+                        case "recievePrivateText":
+                            res = pengirim + ": " + text;
+ 
+                            if (kepada.equals(username)) {
+                                for (PrivChatDialog pMDialog : dialogs) {
+                                    if (pMDialog.getName().equals(pengirim)) {
+                                        pMDialog.display(res);
+                                        pMDialog.setVisible(true);
+                                        break;
+                                    }
+                                }
+                            }
+ 
+                            break;
+                        case "login":
+                            viewTextArea.setText(viewTextArea.getText() + pengirim + " sedah login..." + "\n");
+                            clients.add(pengirim);
+                            break;
+                        case "logout":
+                            viewTextArea.setText(viewTextArea.getText() + pengirim + " telah logout..." + "\n");
+                            clients.remove(pengirim);
+                            for (PrivChatDialog pMDialog : dialogs) {
+                                if (pMDialog.getName().equals(pengirim)) {
+                                    dialogs.remove(pMDialog);
+                                    break;
+                                }
+                            }
+                            break;
+                        case "list":
+                            setTable(text);
+                            break;
+                    }
+                } catch (IOException e) {
+                    System.out.println("Server has close the connection: " + e);
+                    break;
+                } catch (ClassNotFoundException e2) {
+                }
+            }
+        }
+ 
+        private void setTable(String text) {
+            int rows = text.split(":").length - 1;
+            Object[][] data = new Object[rows][1];
+ 
+            for (int i = 0; i < rows; i++) {
+                String t = text.split(":")[i];
+                data[i][0] = t;
+ 
+                boolean ada = false;
+                for (PrivChatDialog pMDialog : dialogs) {
+                    if (pMDialog.getName().equals(t)) {
+                        ada = true;
+                    }
+                }
+ 
+                if (!ada) {
+                    PrivChatDialog pmd = new PrivChatDialog(SubsHome.this, socket, input, output, username, t);
+                    pmd.setName(t);
+                    pmd.setTitle(username + "/" + t);
+                    dialogs.add(pmd);
+                }
+            }
+ 
+            String[] header = {"Clients"};
+ 
+            clientTable.setModel(new DefaultTableModel(data, header) {
+ 
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            });
+        }
+    }
+    */
+
 }
