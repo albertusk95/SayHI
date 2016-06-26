@@ -120,6 +120,67 @@ public class SubsHome extends javax.swing.JFrame {
      * Initiate friends list, chat's history, and global friends
      */
     private void initFriendsList() {
+        BufferedReader br0 = null;
+        BufferedReader br1 = null;
+        String[] FriendsList;
+        String tempInfo;
+        int indexFriendsList = 0;
+        
+        try {
+            numFriendsList = 0;
+            br0 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
+            while (br0.readLine() != null) {
+                numFriendsList++;
+            }
+            
+            System.out.println("Total friends: " + numFriendsList);
+            
+            FriendsList = new String[numFriendsList];
+             
+            br1 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
+            while ((tempInfo = br1.readLine()) != null) {
+                FriendsList[indexFriendsList] = tempInfo;
+                indexFriendsList++;
+            }
+            
+            Object[][] data = new Object[numFriendsList][2];
+            String[] header = {"ID", "Full Name"};
+            int idxSplitted;
+            
+            // mengisi objek data dengan semua user yang terdaftar dalam database
+            for (int i = 0; i < numFriendsList; i++) {
+                idxSplitted = 0;
+                data[i][1] = "";
+                for (String splittedVal: FriendsList[i].split(" ")){
+                    if (idxSplitted == 0) {
+                        data[i][0] = splittedVal;
+                    } else {
+                        data[i][1] = data[i][1] + splittedVal;
+                        if (idxSplitted == 1) {
+                            data[i][1] = data[i][1] + " ";
+                        }
+                    } 
+                    idxSplitted++;
+                }
+            }
+        
+            tabelFriendsList.setModel(new DefaultTableModel(data, header) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            });
+        
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br0.close();
+                br1.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         
     }
     
@@ -143,24 +204,33 @@ public class SubsHome extends javax.swing.JFrame {
             
             System.out.println("Total glob friends: " + numGlobFriends);
             
+            Object[][] tableData = GET_TableData();
+            
             GlobFriends = new String[numGlobFriends];
              
             br1 = new BufferedReader(new FileReader(path_to_subslist));
             while ((tempInfo = br1.readLine()) != null) {
                 if (!tempInfo.split(" ")[2].equals(username)) {
-                    GlobFriends[indexGlobFriends] = tempInfo;
-                    indexGlobFriends++;
-                    
-                    System.out.println("Username glob friends: " + tempInfo.split(" ")[2]);
+                    for (int i = 0; i < numFriendsList; i++) {
+                        String tempFullName = tempInfo.split(" ")[0] + " " + tempInfo.split(" ")[1]; 
+                        if (tempFullName.equals(tableData[i][1])) {
+                            break;
+                        } else {
+                            if (i == numFriendsList - 1) {
+                                GlobFriends[indexGlobFriends] = tempInfo;
+                                indexGlobFriends++;
+                            }
+                        }
+                    }
                 }
             }
             
-            Object[][] data = new Object[numGlobFriends - 1][2];
+            Object[][] data = new Object[indexGlobFriends][2];
             String[] header = {"ID", "Full Name"};
             int idxSplitted;
             
             // mengisi objek data dengan semua user yang terdaftar dalam database
-            for (int i = 0; i < numGlobFriends - 1; i++) {
+            for (int i = 0; i < indexGlobFriends; i++) {
                 idxSplitted = 0;
                 data[i][1] = "";
                 for (String splittedVal: GlobFriends[i].split(" ")){
@@ -216,8 +286,6 @@ public class SubsHome extends javax.swing.JFrame {
         btnDeleteChat = new javax.swing.JButton();
         panelGlobalAddControl = new javax.swing.JPanel();
         btnAddFriend = new javax.swing.JButton();
-        panelFriendsListControl = new javax.swing.JPanel();
-        btnDeleteFriend = new javax.swing.JButton();
 
         jLabel1.setText("jLabel1");
 
@@ -310,28 +378,6 @@ public class SubsHome extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        panelFriendsListControl.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Friends list control", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Cambria", 1, 14))); // NOI18N
-
-        btnDeleteFriend.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
-        btnDeleteFriend.setText("Delete");
-
-        javax.swing.GroupLayout panelFriendsListControlLayout = new javax.swing.GroupLayout(panelFriendsListControl);
-        panelFriendsListControl.setLayout(panelFriendsListControlLayout);
-        panelFriendsListControlLayout.setHorizontalGroup(
-            panelFriendsListControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelFriendsListControlLayout.createSequentialGroup()
-                .addGap(68, 68, 68)
-                .addComponent(btnDeleteFriend)
-                .addContainerGap(88, Short.MAX_VALUE))
-        );
-        panelFriendsListControlLayout.setVerticalGroup(
-            panelFriendsListControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelFriendsListControlLayout.createSequentialGroup()
-                .addContainerGap(13, Short.MAX_VALUE)
-                .addComponent(btnDeleteFriend, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -344,36 +390,46 @@ public class SubsHome extends javax.swing.JFrame {
                 .addGap(29, 29, 29)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(panelChatControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(panelFriendsListControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(panelChatControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(29, 29, 29))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(37, Short.MAX_VALUE)
+                .addContainerGap(53, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(46, 46, 46))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(panelFriendsListControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(panelChatControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(34, 34, 34))))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(46, 46, 46))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(79, 79, 79)
+                .addComponent(panelChatControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(46, 46, 46)
+                .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Prosedur mengkonversi data pada JTabel menjadi array
+     */
+    private Object[][] GET_TableData () {
+        DefaultTableModel dtm = (DefaultTableModel) tabelFriendsList.getModel();
+        int nRow = dtm.getRowCount(), nCol = dtm.getColumnCount();
+        Object[][] tableData = new Object[nRow][nCol];
+        for (int i = 0 ; i < nRow ; i++) {
+            for (int j = 0 ; j < nCol ; j++) {
+                tableData[i][j] = dtm.getValueAt(i, j);
+            }
+        }
+        return tableData;
+    }
+    
     /**
      * Prosedur mendapatkan isi dari file FriendList.txt
      */
@@ -419,12 +475,12 @@ public class SubsHome extends javax.swing.JFrame {
     /**
      * Prosedur mengecek apakah file friendlist.txt kosong atau tidak
      */
-    private boolean isSubsFileEmpty(String userID) {
+    private boolean isSubsFileEmpty() {
         BufferedReader br = null;
         boolean isEmpty = false;
 
         try {
-            br = new BufferedReader(new FileReader(path_to_users + userID + "\\friendlist.txt"));     
+            br = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));     
             if (br.readLine() == null) {
                 System.out.println("File friendlist.txt is empty");
                 isEmpty = true;
@@ -454,7 +510,7 @@ public class SubsHome extends javax.swing.JFrame {
 
                 FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
                 BufferedWriter bw = new BufferedWriter(fw);
-                if (isSubsFileEmpty(friendID)) {
+                if (isSubsFileEmpty()) {
                     bw.write(friendID);
                     bw.write(" ");
                     bw.write(friendFirstName);
@@ -517,16 +573,22 @@ public class SubsHome extends javax.swing.JFrame {
                 }
             }
         
+            // update isi tabel friendslist
             tabelFriendsList.setModel(new DefaultTableModel(data, header) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return false;
                 }
             });
+            
+            // menghapus user di global friends yang dipilih untuk ditambahkan ke friends list
+            int modelIndex = tabelGlobalFriends.convertRowIndexToModel(idxRow); 
+            DefaultTableModel model = (DefaultTableModel)tabelGlobalFriends.getModel();
+            model.removeRow(modelIndex);
+            
         }
     }//GEN-LAST:event_btnAddFriendActionPerformed
 
-    
     /**
      * @param args the command line arguments
      */
@@ -565,13 +627,11 @@ public class SubsHome extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAddFriend;
     private javax.swing.JButton btnDeleteChat;
-    private javax.swing.JButton btnDeleteFriend;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JPanel panelChatControl;
-    private javax.swing.JPanel panelFriendsListControl;
     private javax.swing.JPanel panelGlobalAddControl;
     private javax.swing.JTable tabelChatHistory;
     private javax.swing.JTable tabelFriendsList;
