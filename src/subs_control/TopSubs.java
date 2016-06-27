@@ -16,14 +16,17 @@ import java.io.IOException;
 public class TopSubs extends javax.swing.JFrame {
 
     private final String path_to_config;
-    private String hostname, listeningPort, username;
+    private String hostname, listeningPort, username, fullname;
     
     /**
      * Creates new form TopSubs
+     * @param username
+     * @param fullname 
      */
-    public TopSubs(String username) {
+    public TopSubs(String username, String fullname) {
         path_to_config = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\admin\\server_config.txt";
         this.username = username;
+        this.fullname = fullname;
         initComponents();
     }
 
@@ -99,7 +102,7 @@ public class TopSubs extends javax.swing.JFrame {
     private void btnServerConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnServerConnectActionPerformed
         // TODO add your handling code here:
         
-        String[] args = new String[3];
+        String[] args = new String[4];
         
         // mengambil informasi mengenai hostname dan listening port server
         hostname = GET_SERVERINFO()[0];
@@ -111,6 +114,7 @@ public class TopSubs extends javax.swing.JFrame {
         args[0] = hostname;
         args[1] = listeningPort;
         args[2] = username;
+        args[3] = fullname;
         this.setVisible(false);
         SubsHome.main(args);
     }//GEN-LAST:event_btnServerConnectActionPerformed
@@ -145,7 +149,7 @@ public class TopSubs extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new TopSubs(args[0]).setVisible(true);
+                new TopSubs(args[0], args[1]).setVisible(true);
             }
         });
     }

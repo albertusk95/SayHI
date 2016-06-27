@@ -21,7 +21,8 @@ public class TopHome extends javax.swing.JFrame {
     private final String path_to_subslist = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\subs_list.txt";
     private String loginUsername;
     private String loginPassword;
-    
+    private String loginFullName;
+   
     /**
      * Creates new form TopHome
      */
@@ -135,7 +136,7 @@ public class TopHome extends javax.swing.JFrame {
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // TODO add your handling code here:
         int loginStatus = 0;
-        String[] args = new String[1];
+        String[] args = new String[2];
         
         if (txtUsernameLogin.equals("") || txtPasswordLogin.equals("")) {
              JOptionPane.showMessageDialog(this, "You must fill username and password", "Invalid login", JOptionPane.ERROR_MESSAGE);
@@ -149,6 +150,7 @@ public class TopHome extends javax.swing.JFrame {
                 if (loginStatus == 1) {
                     JOptionPane.showMessageDialog(this, "You're successfully login", "Valid login", JOptionPane.PLAIN_MESSAGE);
                     args[0] = loginUsername;
+                    args[1] = loginFullName;
                     TopSubs.main(args);
                     this.setVisible(false);
                 } else {
@@ -191,6 +193,7 @@ public class TopHome extends javax.swing.JFrame {
                     // cek kesamaan username dan password
                     if (loginUsername.equals(subsInfo[2]) && loginPassword.equals(subsInfo[3])) {
                         validStatus = 1;
+                        loginFullName = subsInfo[0] + " " + subsInfo[1];
                         break;
                     } 
                 }

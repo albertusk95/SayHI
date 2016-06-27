@@ -297,23 +297,24 @@ public class RegisterHome extends javax.swing.JFrame {
                         
                         System.out.println("User's data area is created");
                         
-                        // membuat file friends list dan chat history
                         try {
-    		 
+                            // membuat file friends list 
                             File fileFriendsList = new File(path_to_users + registerUsername + "\\friendlist.txt");
                             if (fileFriendsList.createNewFile()){
                                 System.out.println("Friends list file is created");
                             }else{
                                 System.out.println("Friends list file already exists");
                             }
-                            
-                            File fileChatHistory = new File(path_to_users + registerUsername + "\\chathistory.txt");
-                            if (fileChatHistory.createNewFile()){
-                                System.out.println("Chat history file is created");
-                            }else{
-                                System.out.println("Chat history already exists");
+                
+                            // membuat folder chat history
+                            File chathist_directory = new File(path_to_users + registerUsername + "\\chathistory");
+                            if (chathist_directory.mkdir()) {
+                                System.out.println("User's chat history area is created");
+                            } else {
+                                // menampilkan pesan error dalam proses registrasi user baru
+                                System.out.println("Failed to create user's chat history area");
                             }
-
+                            
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

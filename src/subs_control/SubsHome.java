@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.swing.table.DefaultTableModel;
 
@@ -25,14 +27,15 @@ public class SubsHome extends javax.swing.JFrame {
 
     private final String path_to_users = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\";
     private final String path_to_subslist = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\subs_list.txt";
-    private final String hostname, username;
+    private final String path_to_chathist = "C:\\Users\\AlbertusK95\\Documents\\NetBeansProjects\\SayHI\\users\\subscriber\\";
+    private final String hostname, username, fullname;
     private final int listeningPort;
 
     private List<String> clients;
     private List<PrivChatDialog> dialogs;
     
     private int numFriendsList;
-    
+   
     private ObjectInputStream input;
     private ObjectOutputStream output;
     private Socket socket;
@@ -41,11 +44,12 @@ public class SubsHome extends javax.swing.JFrame {
      * Creates new form SubsHome
      * @param username
      */
-    public SubsHome(String hostname, int listeningPort, String username) {
+    public SubsHome(String hostname, int listeningPort, String username, String fullname) {
         boolean startVal;
         this.hostname = hostname;
         this.listeningPort = listeningPort;
         this.username = username;
+        this.fullname = fullname;
         initComponents();
         initFriendsList();
         initChatHistory();
@@ -120,25 +124,20 @@ public class SubsHome extends javax.swing.JFrame {
      * Initiate friends list, chat's history, and global friends
      */
     private void initFriendsList() {
-        BufferedReader br0 = null;
-        BufferedReader br1 = null;
+        BufferedReader br = null;
         String[] FriendsList;
         String tempInfo;
         int indexFriendsList = 0;
         
         try {
-            numFriendsList = 0;
-            br0 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
-            while (br0.readLine() != null) {
-                numFriendsList++;
-            }
+            numFriendsList = GET_num(username);
             
-            System.out.println("Total friends: " + numFriendsList);
+            //System.out.println("Total friends: " + numFriendsList);
             
             FriendsList = new String[numFriendsList];
              
-            br1 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
-            while ((tempInfo = br1.readLine()) != null) {
+            br = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
+            while ((tempInfo = br.readLine()) != null) {
                 FriendsList[indexFriendsList] = tempInfo;
                 indexFriendsList++;
             }
@@ -175,8 +174,7 @@ public class SubsHome extends javax.swing.JFrame {
             e.printStackTrace();
         } finally {
             try {
-                br0.close();
-                br1.close();
+                br.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -185,42 +183,76 @@ public class SubsHome extends javax.swing.JFrame {
     }
     
     private void initChatHistory() {
+        String path_to_user_chathist = path_to_chathist + username + "\\chathistory\\";
+        String[] ChatFileName;
+        String[] FriendsList;
+        int idx = 0;
         
+        // mendapatkan semua friend list 
+        FriendsList = GET_ArrayOfFriends(username);
+        
+        // mendapatkan nama semua file dalam folder chat history
+        ChatFileName = GET_ChatFileName();
+
+        Object[][] data = new Object[ChatFileName.length][3];
+        String[] header = {"ID", "Full Name", "Chat"};
+        
+        // menampilkan isi file chat history ke tabel 
+        for (String cfn : ChatFileName) {
+            System.out.println("chat name: " + cfn);
+            
+            for (String fl : FriendsList) {
+                if ((fl.split(" ")[0]+".txt").equals(cfn)) {
+                    data[idx][0] = fl.split(" ")[0];
+                    data[idx][1] = fl.split(" ")[1] + " " + fl.split(" ")[2];
+                    data[idx][2] = GET_LastLineOfFile(cfn);
+                    idx++;
+                    break;
+                }
+            }
+        }
+        
+        // update tabel chat history
+        tabelChatHistory.setModel(new DefaultTableModel(data, header) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        });
     }
     
     private void initGlobalFriends() {
-        BufferedReader br0 = null;
-        BufferedReader br1 = null;
+        BufferedReader br = null;
         String[] GlobFriends;
         String tempInfo;
         int indexGlobFriends = 0;
-        int numGlobFriends = 0;
+        int numGlobFriends;
         
-        try {
-            br0 = new BufferedReader(new FileReader(path_to_subslist));
-            while (br0.readLine() != null) {
-                numGlobFriends++;
-            }
-            
-            System.out.println("Total glob friends: " + numGlobFriends);
+        try {    
+            numGlobFriends = GET_num("globfriends");
             
             Object[][] tableData = GET_TableData();
             
             GlobFriends = new String[numGlobFriends];
              
-            br1 = new BufferedReader(new FileReader(path_to_subslist));
-            while ((tempInfo = br1.readLine()) != null) {
+            br = new BufferedReader(new FileReader(path_to_subslist));
+            while ((tempInfo = br.readLine()) != null) {
                 if (!tempInfo.split(" ")[2].equals(username)) {
-                    for (int i = 0; i < numFriendsList; i++) {
-                        String tempFullName = tempInfo.split(" ")[0] + " " + tempInfo.split(" ")[1]; 
-                        if (tempFullName.equals(tableData[i][1])) {
-                            break;
-                        } else {
-                            if (i == numFriendsList - 1) {
-                                GlobFriends[indexGlobFriends] = tempInfo;
-                                indexGlobFriends++;
+                    if (numFriendsList > 0) {
+                        for (int i = 0; i < numFriendsList; i++) {
+                            String tempFullName = tempInfo.split(" ")[0] + " " + tempInfo.split(" ")[1]; 
+                            if (tempFullName.equals(tableData[i][1])) {
+                                break;
+                            } else {
+                                if (i == numFriendsList - 1) {
+                                    GlobFriends[indexGlobFriends] = tempInfo;
+                                    indexGlobFriends++;
+                                }
                             }
                         }
+                    } else {
+                        GlobFriends[indexGlobFriends] = tempInfo;
+                        indexGlobFriends++;
                     }
                 }
             }
@@ -257,8 +289,7 @@ public class SubsHome extends javax.swing.JFrame {
             e.printStackTrace();
         } finally {
             try {
-                br0.close();
-                br1.close();
+                br.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -307,12 +338,12 @@ public class SubsHome extends javax.swing.JFrame {
 
         tabelChatHistory.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null},
-                {null},
-                {null}
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
-                "Chat's history"
+                "ID", "Full Name", "Chat"
             }
         ));
         jScrollPane2.setViewportView(tabelChatHistory);
@@ -333,6 +364,11 @@ public class SubsHome extends javax.swing.JFrame {
 
         btnDeleteChat.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
         btnDeleteChat.setText("Delete");
+        btnDeleteChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeleteChatActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panelChatControlLayout = new javax.swing.GroupLayout(panelChatControl);
         panelChatControl.setLayout(panelChatControlLayout);
@@ -416,6 +452,119 @@ public class SubsHome extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
+     * Prosedur mendapatkan teks pada baris terakhir suatu file 
+     */
+    private String GET_LastLineOfFile(String whatVal) {
+        BufferedReader br = null;
+        String lastLine = "";
+        String sCurrentLine;
+        
+        try {
+            br = new BufferedReader(new FileReader(path_to_users + username + "\\chathistory\\" + whatVal));
+            while ((sCurrentLine = br.readLine()) != null) {
+                lastLine = sCurrentLine;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return lastLine;
+    }
+    
+    /**
+     * Prosedur mendapatkan array of nama file chat
+     */
+    private String[] GET_ChatFileName() {
+        
+        Collection<String> files = new ArrayList<String>();
+        File dir = new File(path_to_users + username + "\\chathistory");
+        
+        if(dir.isDirectory()){
+            File[] listFiles = dir.listFiles();
+
+            for(File file : listFiles){
+                if(file.isFile()) {
+                    files.add(file.getName());
+                }
+            }
+        }
+
+        return files.toArray(new String[]{});
+    }
+    
+    /**
+     * Prosedur mendapatkan banyak global friends dari file subslist
+     */
+    private int GET_num(String whatNum) {
+        BufferedReader br = null;
+        int num = 0;
+        
+        try {
+            if (whatNum.equals("globfriends")) {
+                br = new BufferedReader(new FileReader(path_to_subslist));
+            } else {
+                br = new BufferedReader(new FileReader(path_to_users + whatNum + "\\friendlist.txt"));
+            }
+            while (br.readLine() != null) {
+                num++;
+            }  
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        if (!whatNum.equals("globfriends")) {
+            numFriendsList = num;
+        }
+        
+        return num;
+    }
+   
+    /**
+     * Prosedur mendapatkan array of global friends dan friends list
+     */
+    private String[] GET_ArrayOfFriends(String whatFriend) {
+        BufferedReader br = null;
+        String tempInfo;
+        String[] arrFriends = new String[GET_num(whatFriend)];
+        int indexFriends = 0;
+        
+        try {
+            if (whatFriend.equals("globfriends")) {
+                br = new BufferedReader(new FileReader(path_to_subslist));
+            } else {
+                br = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
+            }
+            
+            while ((tempInfo = br.readLine()) != null) {
+                arrFriends[indexFriends] = tempInfo;
+                indexFriends++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return arrFriends;
+    }
+    
+    /**
      * Prosedur mengkonversi data pada JTabel menjadi array
      */
     private Object[][] GET_TableData () {
@@ -433,6 +582,7 @@ public class SubsHome extends javax.swing.JFrame {
     /**
      * Prosedur mendapatkan isi dari file FriendList.txt
      */
+    /*
     private String[] GET_FriendList() {
         BufferedReader br0 = null;
         BufferedReader br1 = null;
@@ -471,16 +621,17 @@ public class SubsHome extends javax.swing.JFrame {
         
         return FriendsList;
     }
+    */
     
     /**
      * Prosedur mengecek apakah file friendlist.txt kosong atau tidak
      */
-    private boolean isSubsFileEmpty() {
+    private boolean isSubsFileEmpty(String userID) {
         BufferedReader br = null;
         boolean isEmpty = false;
 
         try {
-            br = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));     
+            br = new BufferedReader(new FileReader(path_to_users + userID + "\\friendlist.txt"));     
             if (br.readLine() == null) {
                 System.out.println("File friendlist.txt is empty");
                 isEmpty = true;
@@ -500,25 +651,41 @@ public class SubsHome extends javax.swing.JFrame {
 
     /**
      * Prosedur menambahkan seorang global friend ke dalam file friendlist.txt
+     * @param friendID username dari user yang ingin ditambahkan
+     * @param friendFullName fullname dari user yang ingin ditambahkan
+     * @param pov 1 untuk menambah user ke dalam friend list. 2 untuk menambah diri sendiri ke friend list user yang baru ditambahkan ke dalam friend list
      */
-    private void addFriendToFile(String friendID, String friendFullName) {
+    private void addFriendToFile(String friendID, String friendFullName, int pov) {
             String friendFirstName = friendFullName.split(" ")[0];
             String friendLastName = friendFullName.split(" ")[1];
+            File file;
             
             try {
-                File file = new File(path_to_users + username + "\\friendlist.txt");
-
+                if (pov == 1) {
+                    file = new File(path_to_users + username + "\\friendlist.txt");
+                } else {
+                    file = new File(path_to_users + friendID + "\\friendlist.txt");
+                }
+                
                 FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
                 BufferedWriter bw = new BufferedWriter(fw);
-                if (isSubsFileEmpty()) {
-                    bw.write(friendID);
+                if (isSubsFileEmpty(friendID)) {
+                    if (pov == 1) {
+                        bw.write(friendID);
+                    } else {
+                        bw.write(username);
+                    }
                     bw.write(" ");
                     bw.write(friendFirstName);
                     bw.write(" ");
                     bw.write(friendLastName);
                 } else {
                     bw.newLine();
-                    bw.write(friendID);
+                    if (pov == 1) {
+                        bw.write(friendID);
+                    } else {
+                        bw.write(username);
+                    }
                     bw.write(" ");
                     bw.write(friendFirstName);
                     bw.write(" ");
@@ -528,6 +695,26 @@ public class SubsHome extends javax.swing.JFrame {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+    }
+    
+    /**
+     * Prosedur menghapus file chat history seorang user yang dipilih
+     */
+    private void deleteChatHistoryFile(String userID) {
+        
+        // hapus file chat history user yang dipilih
+        try {
+            File file = new File(path_to_users + username + "\\chathistory\\" + userID + ".txt");
+
+            if (file.delete()) {
+                System.out.println(file.getName() + " is deleted");
+            }else {
+                System.out.println("Delete operation is failed");
+            }
+    	} catch(Exception e){	
+            e.printStackTrace();
+    	}
+        
     }
     
     /**
@@ -547,10 +734,12 @@ public class SubsHome extends javax.swing.JFrame {
             System.out.println("Selected: " + clickedElmt_ID + " " + clickedElmt_FullName);
             
             // menambahkan ke dalam file friends list
-            addFriendToFile(clickedElmt_ID, clickedElmt_FullName);
+            addFriendToFile(clickedElmt_ID, clickedElmt_FullName, 1);
             
             // menambahkan ke dalam tabel friends list
-            FriendsList = GET_FriendList();
+            //FriendsList = GET_FriendList();
+            
+            FriendsList = GET_ArrayOfFriends(username);
             Object[][] data = new Object[numFriendsList][2];
             String[] header = {"ID", "Full Name"};
             int idxSplitted;
@@ -586,8 +775,29 @@ public class SubsHome extends javax.swing.JFrame {
             DefaultTableModel model = (DefaultTableModel)tabelGlobalFriends.getModel();
             model.removeRow(modelIndex);
             
+            // menambahkan this.user ke dalam friend list user yang baru di add (2 arah)
+            addFriendToFile(clickedElmt_ID, fullname, 2);
+            
         }
     }//GEN-LAST:event_btnAddFriendActionPerformed
+
+    private void btnDeleteChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteChatActionPerformed
+        // TODO add your handling code here:
+        int idxRow = tabelChatHistory.getSelectedRow();
+        
+        if(idxRow != -1) {
+            // mengambil username dan fullname dari user yang dipilih
+            String clickedElmt_ID = (tabelChatHistory.getModel().getValueAt(idxRow, 0).toString());
+            
+            // menghapus file chat history 
+            deleteChatHistoryFile(clickedElmt_ID);
+            
+            // menghapus chat user yang dipilih pada tabel chat history
+            int modelIndex = tabelChatHistory.convertRowIndexToModel(idxRow); 
+            DefaultTableModel model = (DefaultTableModel)tabelChatHistory.getModel();
+            model.removeRow(modelIndex);
+        }
+    }//GEN-LAST:event_btnDeleteChatActionPerformed
 
     /**
      * @param args the command line arguments
@@ -619,7 +829,7 @@ public class SubsHome extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SubsHome(args[0], Integer.parseInt(args[1]), args[2]).setVisible(true);
+                new SubsHome(args[0], Integer.parseInt(args[1]), args[2], args[3]).setVisible(true);
             }
         });
     }
