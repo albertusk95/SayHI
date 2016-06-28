@@ -41,6 +41,7 @@ public class SubsHome extends javax.swing.JFrame {
     
     private List<String> clients;
     private List<PrivChatDialog> dialogs;
+    private List<NDPrivChatDialog> NDdialogs;
     
     /**
      * Creates new form SubsHome
@@ -50,6 +51,7 @@ public class SubsHome extends javax.swing.JFrame {
         boolean startVal;
         clients = new ArrayList<>();
         dialogs = new ArrayList<>();
+        NDdialogs = new ArrayList<>();
         this.hostname = hostname;
         this.listeningPort = listeningPort;
         this.username = username;
@@ -691,6 +693,7 @@ public class SubsHome extends javax.swing.JFrame {
             File file;
             
             try {
+                
                 if (pov == 1) {
                     file = new File(path_to_users + username + "\\friendlist.txt");
                 } else {
@@ -699,7 +702,7 @@ public class SubsHome extends javax.swing.JFrame {
                 
                 FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
                 BufferedWriter bw = new BufferedWriter(fw);
-                if (isSubsFileEmpty(friendID)) {
+                if ((pov == 1 && isSubsFileEmpty(username)) || (pov == 2 && isSubsFileEmpty(friendID))) {
                     if (pov == 1) {
                         bw.write(friendID);
                     } else {
@@ -843,14 +846,35 @@ public class SubsHome extends javax.swing.JFrame {
         // TODO add your handling code here:
         if (evt.getClickCount() == 2 && tabelFriendsList.getSelectedRow() >= 0) {
             String kepada = (String) tabelFriendsList.getValueAt(tabelFriendsList.getSelectedRow(), 0);
+            
+            // kasus dimana user tujuan sedang online
             for (PrivChatDialog pMDialog : dialogs) {
                 if (pMDialog.getName().equals(kepada) && !kepada.equals(username)) {
                     pMDialog.setTitle(username + "/" + kepada);
                     pMDialog.display("Silakan tulis pesan kepada " + kepada);
                     pMDialog.setVisible(true);
+                    
+                    // cek apakah NDdialogs sedang aktif. Jika ya, maka set visible = false
+                    for (NDPrivChatDialog NDpMDialog : NDdialogs) {
+                        if (NDpMDialog.getName().equals(kepada)) {
+                            NDpMDialog.setVisible(false);
+                            NDdialogs.remove(NDpMDialog);
+                            return;
+                        }
+                    }
+                    
                     return;
                 }
             }
+            
+            // kasus dimana user tujuan tidak sedang online
+            System.out.println("User tujuan tidak sedang online: " + kepada);
+            NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, username, kepada); 
+            ndc.setName(kepada);
+            NDdialogs.add(ndc);
+            ndc.setVisible(true);
+            
+            System.out.println("Set name: " + ndc.getName());
         }
     }//GEN-LAST:event_tabelFriendsListMouseClicked
 
@@ -921,6 +945,7 @@ public class SubsHome extends javax.swing.JFrame {
                         case "recievePrivateText":
                             res = pengirim + ": " + text;
  
+                            // menampilkan kotak dialog private chat
                             if (kepada.equals(username)) {
                                 for (PrivChatDialog pMDialog : dialogs) {
                                     if (pMDialog.getName().equals(pengirim)) {
@@ -951,6 +976,7 @@ public class SubsHome extends javax.swing.JFrame {
                             addToOnlineList(text);
                             break;
                     }
+                    
                 } catch (IOException e) {
                     System.out.println("Server has close the connection: " + e);
                     break;
@@ -958,8 +984,9 @@ public class SubsHome extends javax.swing.JFrame {
                 }
             }
         }
- 
+        
         private void addToOnlineList(String text) {
+            int NDvisible;
             int rows = text.split(":").length - 1;
             
             for (int i = 0; i < rows; i++) {
@@ -972,52 +999,49 @@ public class SubsHome extends javax.swing.JFrame {
                     }
                 }
  
+                // menhilangkan NDdialog jika user tujuan sudah online
+                NDvisible = 0;
+                for (NDPrivChatDialog NDpMDialog : NDdialogs) {
+                    if (NDpMDialog.getName().equals(t)) {
+                        System.out.println("NDdialogs is running " + username);
+                        if (NDpMDialog.isVisible()) {
+                            NDvisible = 1;
+                            NDpMDialog.setVisible(false);
+                        }
+                        NDdialogs.remove(NDpMDialog);
+                        break;
+                    } else {
+                        System.out.println("No: " + NDpMDialog.getName());
+                    }
+                }
+                
                 if (!exists) {
                     System.out.println("Add to dialog list: " + t);
+                 
                     PrivChatDialog pmd = new PrivChatDialog(SubsHome.this, socket, input, output, username, t);
                     pmd.setName(t);
                     pmd.setTitle(username + "/" + t);
                     dialogs.add(pmd);
+                    
+                    for (PrivChatDialog pMDialog : dialogs) {
+                        System.out.println("* " + pMDialog.getName());
+                    }
+                    
+                }
+                
+                // menampilkan dialog online jika nilai isVisible NDdialogs = true
+                if (NDvisible == 1) {
+                    for (PrivChatDialog pMDialog : dialogs) {
+                        if (pMDialog.getName().equals(t)) {
+                            pMDialog.setVisible(true);
+                            break;
+                        }
+                    }
                 }
             }
  
         }
         
-        /*
-        private void setTable(String text) {
-            int rows = text.split(":").length - 1;
-            Object[][] data = new Object[rows][1];
- 
-            for (int i = 0; i < rows; i++) {
-                String t = text.split(":")[i];
-                data[i][0] = t;
- 
-                boolean ada = false;
-                for (PrivChatDialog pMDialog : dialogs) {
-                    if (pMDialog.getName().equals(t)) {
-                        ada = true;
-                    }
-                }
- 
-                if (!ada) {
-                    PrivChatDialog pmd = new PrivChatDialog(SubsHome.this, socket, input, output, username, t);
-                    pmd.setName(t);
-                    pmd.setTitle(username + "/" + t);
-                    dialogs.add(pmd);
-                }
-            }
- 
-            String[] header = {"Clients"};
- 
-            clientTable.setModel(new DefaultTableModel(data, header) {
- 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            });
-        }
-        */
     }
 
 }
