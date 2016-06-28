@@ -17,6 +17,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -31,14 +33,14 @@ public class SubsHome extends javax.swing.JFrame {
     private final String hostname, username, fullname;
     private final int listeningPort;
 
-    private List<String> clients;
-    private List<PrivChatDialog> dialogs;
-    
     private int numFriendsList;
    
     private ObjectInputStream input;
     private ObjectOutputStream output;
     private Socket socket;
+    
+    private List<String> clients;
+    private List<PrivChatDialog> dialogs;
     
     /**
      * Creates new form SubsHome
@@ -46,6 +48,8 @@ public class SubsHome extends javax.swing.JFrame {
      */
     public SubsHome(String hostname, int listeningPort, String username, String fullname) {
         boolean startVal;
+        clients = new ArrayList<>();
+        dialogs = new ArrayList<>();
         this.hostname = hostname;
         this.listeningPort = listeningPort;
         this.username = username;
@@ -54,10 +58,11 @@ public class SubsHome extends javax.swing.JFrame {
         initFriendsList();
         initChatHistory();
         initGlobalFriends();
-        //startVal = start();
+        
+        // memulai koneksi antara client dengan server
+        startVal = start();
     }
     
-    /*
     private boolean start() {
         try {
             socket = new Socket(hostname, listeningPort);
@@ -70,16 +75,21 @@ public class SubsHome extends javax.swing.JFrame {
         System.out.println(msg);
  
         try {
+            // membuat stream input untuk menerima data dari server
             input = new ObjectInputStream(socket.getInputStream());
+    
+            // membuat stream output untuk mengirim data ke server
             output = new ObjectOutputStream(socket.getOutputStream());
         } catch (IOException eIO) {
-            System.out.println("Exception creating new Input/output Streams: " + eIO);
+            System.out.println("Exception creating new input/output Streams: " + eIO);
             return false;
         }
  
+        // membuat thread baru yang akan menerima response dari server
         new SubsHome.ListenFromServer().start();
  
         try {
+            // mengirim data ke server berupa informasi login 
             output.writeObject("login~" + username + "~" + username + " sedang login...~server~\n");
             output.writeObject("list~" + username + "~" + username + " sedang login...~server~\n");
  
@@ -118,7 +128,6 @@ public class SubsHome extends javax.swing.JFrame {
             }
         } catch (Exception e) {}
     }
-    */
     
     /**
      * Initiate friends list, chat's history, and global friends
@@ -317,6 +326,7 @@ public class SubsHome extends javax.swing.JFrame {
         btnDeleteChat = new javax.swing.JButton();
         panelGlobalAddControl = new javax.swing.JPanel();
         btnAddFriend = new javax.swing.JButton();
+        btnExit = new javax.swing.JButton();
 
         jLabel1.setText("jLabel1");
 
@@ -334,6 +344,11 @@ public class SubsHome extends javax.swing.JFrame {
                 "ID", "Full Name"
             }
         ));
+        tabelFriendsList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tabelFriendsListMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tabelFriendsList);
 
         tabelChatHistory.setModel(new javax.swing.table.DefaultTableModel(
@@ -414,38 +429,53 @@ public class SubsHome extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        btnExit.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
+        btnExit.setText("Exit");
+        btnExit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExitActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(38, 38, 38)
+                .addGap(40, 40, 40)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30)
+                .addGap(18, 18, 18)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(29, 29, 29)
+                .addGap(18, 18, 18)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(panelChatControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(29, 29, 29))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(303, 303, 303)
+                .addComponent(btnExit)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(53, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(46, 46, 46))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(79, 79, 79)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGap(48, 48, 48)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(28, 28, 28)
+                .addComponent(btnExit)
+                .addContainerGap(29, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(57, 57, 57)
                 .addComponent(panelChatControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(46, 46, 46)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(panelGlobalAddControl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(97, 97, 97))
         );
 
         pack();
@@ -799,6 +829,31 @@ public class SubsHome extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnDeleteChatActionPerformed
 
+    private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
+        // TODO add your handling code here:
+        try {
+            String message = "logout~" + username + "~" + "logout" + "~server~\n";
+            output.writeObject(message);
+        } catch (IOException ex) {
+            Logger.getLogger(SubsHome.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnExitActionPerformed
+
+    private void tabelFriendsListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelFriendsListMouseClicked
+        // TODO add your handling code here:
+        if (evt.getClickCount() == 2 && tabelFriendsList.getSelectedRow() >= 0) {
+            String kepada = (String) tabelFriendsList.getValueAt(tabelFriendsList.getSelectedRow(), 0);
+            for (PrivChatDialog pMDialog : dialogs) {
+                if (pMDialog.getName().equals(kepada) && !kepada.equals(username)) {
+                    pMDialog.setTitle(username + "/" + kepada);
+                    pMDialog.display("Silakan tulis pesan kepada " + kepada);
+                    pMDialog.setVisible(true);
+                    return;
+                }
+            }
+        }
+    }//GEN-LAST:event_tabelFriendsListMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -837,6 +892,7 @@ public class SubsHome extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAddFriend;
     private javax.swing.JButton btnDeleteChat;
+    private javax.swing.JButton btnExit;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -848,13 +904,13 @@ public class SubsHome extends javax.swing.JFrame {
     private javax.swing.JTable tabelGlobalFriends;
     // End of variables declaration//GEN-END:variables
 
-    /*
     class ListenFromServer extends Thread {
  
         @Override
         public void run() {
             while (true) {
                 try {
+                    // mengambil data yang dikirim oleh server
                     String msg = (String) input.readObject();
                     String res;
                     String type = msg.split("~")[0];
@@ -877,11 +933,11 @@ public class SubsHome extends javax.swing.JFrame {
  
                             break;
                         case "login":
-                            viewTextArea.setText(viewTextArea.getText() + pengirim + " sedah login..." + "\n");
+                            System.out.println(pengirim + " sudah login...");
                             clients.add(pengirim);
                             break;
                         case "logout":
-                            viewTextArea.setText(viewTextArea.getText() + pengirim + " telah logout..." + "\n");
+                            System.out.println(pengirim + " sudah logout...");
                             clients.remove(pengirim);
                             for (PrivChatDialog pMDialog : dialogs) {
                                 if (pMDialog.getName().equals(pengirim)) {
@@ -891,7 +947,8 @@ public class SubsHome extends javax.swing.JFrame {
                             }
                             break;
                         case "list":
-                            setTable(text);
+                            System.out.println("Printing list " + text);
+                            addToOnlineList(text);
                             break;
                     }
                 } catch (IOException e) {
@@ -902,6 +959,31 @@ public class SubsHome extends javax.swing.JFrame {
             }
         }
  
+        private void addToOnlineList(String text) {
+            int rows = text.split(":").length - 1;
+            
+            for (int i = 0; i < rows; i++) {
+                String t = text.split(":")[i];
+                
+                boolean exists = false;
+                for (PrivChatDialog pMDialog : dialogs) {
+                    if (pMDialog.getName().equals(t)) {
+                        exists = true;
+                    }
+                }
+ 
+                if (!exists) {
+                    System.out.println("Add to dialog list: " + t);
+                    PrivChatDialog pmd = new PrivChatDialog(SubsHome.this, socket, input, output, username, t);
+                    pmd.setName(t);
+                    pmd.setTitle(username + "/" + t);
+                    dialogs.add(pmd);
+                }
+            }
+ 
+        }
+        
+        /*
         private void setTable(String text) {
             int rows = text.split(":").length - 1;
             Object[][] data = new Object[rows][1];
@@ -935,7 +1017,7 @@ public class SubsHome extends javax.swing.JFrame {
                 }
             });
         }
+        */
     }
-    */
 
 }

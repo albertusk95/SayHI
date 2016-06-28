@@ -5,20 +5,41 @@
  */
 package subs_control;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author AlbertusK95
  */
 public class PrivChatDialog extends javax.swing.JDialog {
 
+    private final String pengirim;
+    private final String kepada;
+ 
+    private final Socket socket;
+    private final ObjectInputStream input;
+    private final ObjectOutputStream output;
+ 
     /**
      * Creates new form PrivChatDialog
      */
-    public PrivChatDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    public PrivChatDialog(SubsHome parent, Socket socket, ObjectInputStream input, ObjectOutputStream output, String pengirim, String kepada) {
+        super(parent, false);
+ 
+        this.socket = socket;
+        this.input = input;
+        this.output = output;
+        this.pengirim = pengirim;
+        this.kepada = kepada;
+        setLocationRelativeTo(parent);
         initComponents();
     }
-
+ 
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -39,8 +60,19 @@ public class PrivChatDialog extends javax.swing.JDialog {
         txtareaChatHistory.setRows(5);
         jScrollPane1.setViewportView(txtareaChatHistory);
 
+        txtChatPost.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtChatPostActionPerformed(evt);
+            }
+        });
+
         btnSendPrivChat.setFont(new java.awt.Font("Cambria", 1, 14)); // NOI18N
         btnSendPrivChat.setText("Send");
+        btnSendPrivChat.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSendPrivChatActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -71,48 +103,31 @@ public class PrivChatDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    public void display(String res) {
+        txtareaChatHistory.setText(txtareaChatHistory.getText() + res + "\n");
+    }
+    
+    private void btnSendPrivChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendPrivChatActionPerformed
+        // TODO add your handling code here:
+        try {
+            String message = "postPrivateText~" + pengirim + "~" + txtChatPost.getText() + "~" + kepada + "~\n";
+            display(pengirim + ": " + txtChatPost.getText() + "\n");
+            output.writeObject(message);
+            txtChatPost.setText("");
+        } catch (IOException ex) {
+            Logger.getLogger(SubsHome.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnSendPrivChatActionPerformed
+
+    private void txtChatPostActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtChatPostActionPerformed
+        // TODO add your handling code here:
+        btnSendPrivChatActionPerformed(evt);
+    }//GEN-LAST:event_txtChatPostActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(PrivChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(PrivChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(PrivChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(PrivChatDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                PrivChatDialog dialog = new PrivChatDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
-
+        
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnSendPrivChat;
     private javax.swing.JScrollPane jScrollPane1;
