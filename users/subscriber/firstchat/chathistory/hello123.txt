@@ -1,5 +1,20 @@
-hello123: how are u???
-hello123: where r u studying now?
-hello123: hi
-hello123: dimana?
-hello123: voila
+hello123: start
+firstchat: ok
+hello123: then
+firstchat: dunno
+hello123: haha
+firstchat: aaa
+hello123: zzz
+hello123: aa
+firstchat: jadi?
+hello123: oke
+hello123: aa
+hello123: a
+hello123: a
+firstchat: a
+hello123: aaa
+hello123: a
+hello123: aaa
+hello123: aaa
+hello123: oke
+hello123: kok bisa ???
