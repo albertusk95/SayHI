@@ -99,8 +99,80 @@ public class NDPrivChatDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
     
-    public void display(String res) {
+    public void display(String res, int needToGetHist) {
+        
+        // mengambil chat history dari file jika file tersebut ada
+        if (needToGetHist == 1) {
+            File fileChatHist = new File(path_to_users + pengirim + "\\chathistory\\" + penerima + ".txt");
+            if (fileChatHist.exists()) {
+                String[] chathist;
+
+                chathist = GET_ChatFromFile();
+                
+                // menambahkan chathist ke dalam txtareaNDChat
+                for (String ch : chathist) {
+                    txtareaNDChat.setText(txtareaNDChat.getText() + ch + "\n");
+                }
+            }
+        }
+        // update text area
         txtareaNDChat.setText(txtareaNDChat.getText() + res + "\n");
+    }
+    
+    /**
+     * Prosedur mendapatkan banyak global friends dari file subslist
+     */
+    private int GET_num() {
+        BufferedReader br = null;
+        int num = 0;
+        
+        try {
+            br = new BufferedReader(new FileReader(path_to_users + pengirim + "\\chathistory\\" + penerima + ".txt"));
+            
+            while (br.readLine() != null) {
+                num++;
+            }  
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return num;
+    }
+   
+    /**
+     * Prosedur mengambil chat yang telah tersimpan dalam file sebelumnya untuk
+     * ditampilkan dalam txtarea sebagai history
+     */
+    private String[] GET_ChatFromFile() {
+        BufferedReader br = null;
+        String tempInfo;
+        String[] chathist = new String[GET_num()];
+        int indexChatHistory = 0;
+        
+        try {
+            br = new BufferedReader(new FileReader(path_to_users + pengirim + "\\chathistory\\" + penerima + ".txt"));
+            
+            while ((tempInfo = br.readLine()) != null) {
+                chathist[indexChatHistory] = tempInfo;
+                indexChatHistory++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return chathist;
     }
     
     /**
@@ -165,7 +237,7 @@ public class NDPrivChatDialog extends javax.swing.JDialog {
         String msg = pengirim + ": " + txtNDChatPost.getText();
         
         // mengirim pesan yang ditulis ke text area
-        display(msg + "\n");
+        display(msg + "\n", 0);
         
         // mengirimkan pesan yang ditulis ke dalam file chat history pengirim
         sendToChatFile(msg, pengirim, penerima);

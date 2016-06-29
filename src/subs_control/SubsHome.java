@@ -363,6 +363,11 @@ public class SubsHome extends javax.swing.JFrame {
                 "ID", "Full Name", "Chat"
             }
         ));
+        tabelChatHistory.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tabelChatHistoryMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(tabelChatHistory);
 
         tabelGlobalFriends.setModel(new javax.swing.table.DefaultTableModel(
@@ -612,50 +617,6 @@ public class SubsHome extends javax.swing.JFrame {
     }
     
     /**
-     * Prosedur mendapatkan isi dari file FriendList.txt
-     */
-    /*
-    private String[] GET_FriendList() {
-        BufferedReader br0 = null;
-        BufferedReader br1 = null;
-        int indexFriendsList = 0;
-        String[] FriendsList = {};
-        String tempInfo;
-        
-        // mengambil isi friends list dari database
-        try {
-            numFriendsList = 0;
-            
-            br0 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
-            while (br0.readLine() != null) {
-                numFriendsList++;
-            }
-            
-            System.out.println("Friends list counted: " + numFriendsList);
-
-            FriendsList = new String[numFriendsList];
-            
-            br1 = new BufferedReader(new FileReader(path_to_users + username + "\\friendlist.txt"));
-            while ((tempInfo = br1.readLine()) != null) {
-                FriendsList[indexFriendsList] = tempInfo;
-                indexFriendsList++;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                br0.close();
-                br1.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        return FriendsList;
-    }
-    */
-    
-    /**
      * Prosedur mengecek apakah file friendlist.txt kosong atau tidak
      */
     private boolean isSubsFileEmpty(String userID) {
@@ -665,7 +626,7 @@ public class SubsHome extends javax.swing.JFrame {
         try {
             br = new BufferedReader(new FileReader(path_to_users + userID + "\\friendlist.txt"));     
             if (br.readLine() == null) {
-                System.out.println("File friendlist.txt is empty");
+                System.out.println("File " + userID + "\\friendlist.txt is empty");
                 isEmpty = true;
             }
         } catch (IOException e) {
@@ -702,28 +663,40 @@ public class SubsHome extends javax.swing.JFrame {
                 
                 FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
                 BufferedWriter bw = new BufferedWriter(fw);
-                if ((pov == 1 && isSubsFileEmpty(username)) || (pov == 2 && isSubsFileEmpty(friendID))) {
-                    if (pov == 1) {
+                
+                System.out.println("pov: " + pov);
+                if (pov == 1) {
+                    if (isSubsFileEmpty(username)) {
                         bw.write(friendID);
+                        bw.write(" ");
+                        bw.write(friendFirstName);
+                        bw.write(" ");
+                        bw.write(friendLastName);
                     } else {
-                        bw.write(username);
+                        bw.newLine();
+                        bw.write(friendID);
+                        bw.write(" ");
+                        bw.write(friendFirstName);
+                        bw.write(" ");
+                        bw.write(friendLastName);
                     }
-                    bw.write(" ");
-                    bw.write(friendFirstName);
-                    bw.write(" ");
-                    bw.write(friendLastName);
                 } else {
-                    bw.newLine();
-                    if (pov == 1) {
-                        bw.write(friendID);
-                    } else {
+                    if (isSubsFileEmpty(friendID)) {
                         bw.write(username);
+                        bw.write(" ");
+                        bw.write(friendFirstName);
+                        bw.write(" ");
+                        bw.write(friendLastName);
+                    } else {
+                        bw.newLine();
+                        bw.write(username);
+                        bw.write(" ");
+                        bw.write(friendFirstName);
+                        bw.write(" ");
+                        bw.write(friendLastName);
                     }
-                    bw.write(" ");
-                    bw.write(friendFirstName);
-                    bw.write(" ");
-                    bw.write(friendLastName);
                 }
+                
                 bw.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -832,18 +805,30 @@ public class SubsHome extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnDeleteChatActionPerformed
 
+    private void closePrivChatDialog() {
+        for (PrivChatDialog pMDialog : dialogs) {
+            if (pMDialog.getName().equals(username)) {
+                pMDialog.setVisible(false);
+            }
+        }
+    }
+    
     private void btnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExitActionPerformed
-        // TODO add your handling code here:
+        
         try {
             String message = "logout~" + username + "~" + "logout" + "~server~\n";
             output.writeObject(message);
         } catch (IOException ex) {
             Logger.getLogger(SubsHome.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        closePrivChatDialog();
+        
+        System.exit(0);
     }//GEN-LAST:event_btnExitActionPerformed
 
     private void tabelFriendsListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelFriendsListMouseClicked
-        // TODO add your handling code here:
+        
         if (evt.getClickCount() == 2 && tabelFriendsList.getSelectedRow() >= 0) {
             String kepada = (String) tabelFriendsList.getValueAt(tabelFriendsList.getSelectedRow(), 0);
             
@@ -851,32 +836,71 @@ public class SubsHome extends javax.swing.JFrame {
             for (PrivChatDialog pMDialog : dialogs) {
                 if (pMDialog.getName().equals(kepada) && !kepada.equals(username)) {
                     pMDialog.setTitle(username + "/" + kepada);
-                    pMDialog.display("Silakan tulis pesan kepada " + kepada);
+                    pMDialog.display("", 1);
                     pMDialog.setVisible(true);
-                    
-                    // cek apakah NDdialogs sedang aktif. Jika ya, maka set visible = false
-                    for (NDPrivChatDialog NDpMDialog : NDdialogs) {
-                        if (NDpMDialog.getName().equals(kepada)) {
-                            NDpMDialog.setVisible(false);
-                            NDdialogs.remove(NDpMDialog);
-                            return;
-                        }
-                    }
-                    
                     return;
                 }
             }
             
             // kasus dimana user tujuan tidak sedang online
-            System.out.println("User tujuan tidak sedang online: " + kepada);
-            NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, username, kepada); 
-            ndc.setName(kepada);
-            NDdialogs.add(ndc);
-            ndc.setVisible(true);
+            boolean exist = false;
+            for (NDPrivChatDialog tmpND : NDdialogs) {
+                if (tmpND.getName().equals(kepada)) {
+                    exist = true;
+                    tmpND.display("", 1);
+                    tmpND.setVisible(true);
+                    System.out.println("Object NDdialogs already exists");
+                    break;
+                }
+            }
             
-            System.out.println("Set name: " + ndc.getName());
+            if (!exist) {
+                NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, username, kepada); 
+                ndc.setName(kepada);
+                ndc.display("", 1);
+                ndc.setVisible(true);
+                NDdialogs.add(ndc);
+                System.out.println("Created object NDdialogs");
+            }
         }
     }//GEN-LAST:event_tabelFriendsListMouseClicked
+
+    private void tabelChatHistoryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabelChatHistoryMouseClicked
+        if (evt.getClickCount() == 2 && tabelChatHistory.getSelectedRow() >= 0) {
+            String kepada = (String) tabelChatHistory.getValueAt(tabelChatHistory.getSelectedRow(), 0);
+            
+            // kasus dimana user tujuan sedang online
+            for (PrivChatDialog pMDialog : dialogs) {
+                if (pMDialog.getName().equals(kepada) && !kepada.equals(username)) {
+                    pMDialog.setTitle(username + "/" + kepada);
+                    pMDialog.display("", 1);
+                    pMDialog.setVisible(true);
+                    return;
+                }
+            }
+            
+            // kasus dimana user tujuan tidak sedang online
+            boolean exist = false;
+            for (NDPrivChatDialog tmpND : NDdialogs) {
+                if (tmpND.getName().equals(kepada)) {
+                    exist = true;
+                    tmpND.display("", 1);
+                    tmpND.setVisible(true);
+                    System.out.println("Object NDdialogs already exists");
+                    break;
+                }
+            }
+            
+            if (!exist) {
+                NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, username, kepada); 
+                ndc.setName(kepada);
+                ndc.display("", 1);
+                ndc.setVisible(true);
+                NDdialogs.add(ndc);
+                System.out.println("Created object NDdialogs");
+            }
+        }
+    }//GEN-LAST:event_tabelChatHistoryMouseClicked
 
     /**
      * @param args the command line arguments
@@ -944,18 +968,21 @@ public class SubsHome extends javax.swing.JFrame {
                     switch (type) {
                         case "recievePrivateText":
                             res = pengirim + ": " + text;
- 
                             // menampilkan kotak dialog private chat
                             if (kepada.equals(username)) {
                                 for (PrivChatDialog pMDialog : dialogs) {
                                     if (pMDialog.getName().equals(pengirim)) {
-                                        pMDialog.display(res);
-                                        pMDialog.setVisible(true);
+                                        if (pMDialog.isVisible()) {
+                                            System.out.println("visible");
+                                            pMDialog.display(res, 0);
+                                        } else {
+                                            pMDialog.display(res, 1);
+                                            pMDialog.setVisible(true);
+                                        }
                                         break;
                                     }
                                 }
                             }
- 
                             break;
                         case "login":
                             System.out.println(pengirim + " sudah login...");
@@ -1003,16 +1030,13 @@ public class SubsHome extends javax.swing.JFrame {
                 NDvisible = 0;
                 for (NDPrivChatDialog NDpMDialog : NDdialogs) {
                     if (NDpMDialog.getName().equals(t)) {
-                        System.out.println("NDdialogs is running " + username);
                         if (NDpMDialog.isVisible()) {
                             NDvisible = 1;
                             NDpMDialog.setVisible(false);
                         }
                         NDdialogs.remove(NDpMDialog);
                         break;
-                    } else {
-                        System.out.println("No: " + NDpMDialog.getName());
-                    }
+                    } 
                 }
                 
                 if (!exists) {
@@ -1026,22 +1050,20 @@ public class SubsHome extends javax.swing.JFrame {
                     for (PrivChatDialog pMDialog : dialogs) {
                         System.out.println("* " + pMDialog.getName());
                     }
-                    
                 }
                 
                 // menampilkan dialog online jika nilai isVisible NDdialogs = true
                 if (NDvisible == 1) {
                     for (PrivChatDialog pMDialog : dialogs) {
                         if (pMDialog.getName().equals(t)) {
+                            pMDialog.display("", 1);
                             pMDialog.setVisible(true);
                             break;
                         }
                     }
                 }
             }
- 
         }
-        
     }
 
 }
