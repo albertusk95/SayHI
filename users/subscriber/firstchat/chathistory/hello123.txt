@@ -18,3 +18,14 @@ hello123: aaa
 hello123: aaa
 hello123: oke
 hello123: kok bisa ???
+hello123: try
+firstchat: kok
+firstchat: hMh
+firstchat: hai
+hello123: wkwk
+hello123: finish
+hello123: juga
+hello123: try
+firstchat: ok
+hello123: HAH
+firstchat: thx
