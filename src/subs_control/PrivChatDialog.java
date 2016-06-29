@@ -5,6 +5,8 @@
  */
 package subs_control;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,6 +30,8 @@ public class PrivChatDialog extends javax.swing.JDialog {
     private final String pengirim;
     private final String penerima;
  
+    private WindowAdapter windowAdapter;
+    
     private final Socket socket;
     private final ObjectInputStream input;
     private final ObjectOutputStream output;
@@ -45,6 +49,26 @@ public class PrivChatDialog extends javax.swing.JDialog {
         this.penerima = penerima;
         setLocationRelativeTo(parent);
         initComponents();
+        windowAdapter = new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                try {
+                    String message = "updateChatHistTable~" + pengirim + "~" + "updateChatHistTable" + "~" + penerima + "~\n";
+
+                    // mengirim pesan ke server agar SubsHome dapat mengupdate chat history table
+                    output.writeObject(message);
+                } catch (IOException ex) {
+                    Logger.getLogger(PrivChatDialog.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                e.getWindow().dispose();
+            }
+        };
+        
+        addWindowListener(windowAdapter);
+        
     }
  
     /**

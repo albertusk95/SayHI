@@ -5,12 +5,20 @@
  */
 package subs_control;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -22,18 +30,47 @@ public class NDPrivChatDialog extends javax.swing.JDialog {
     private String pengirim;
     private String penerima;
     
+    private WindowAdapter windowAdapter;
+    
+    private final Socket socket;
+    private final ObjectInputStream input;
+    private final ObjectOutputStream output;
+    
     /**
      * Creates new form NDPrivChatDialog
      * @param parent
      * @param pengirim
      * @param penerima
      */
-    public NDPrivChatDialog(SubsHome parent, String pengirim, String penerima) {
+    public NDPrivChatDialog(SubsHome parent, Socket socket, ObjectInputStream input, ObjectOutputStream output, String pengirim, String penerima) {
         super(parent, false);
+        
+        this.socket = socket;
+        this.input = input;
+        this.output = output;
         this.pengirim = pengirim;
         this.penerima = penerima;
         setLocationRelativeTo(parent);
         initComponents();
+        windowAdapter = new WindowAdapter()
+        {
+            @Override
+            public void windowClosing(WindowEvent e)
+            {
+                try {
+                    String message = "updateChatHistTable~" + pengirim + "~" + "updateChatHistTable" + "~" + penerima + "~\n";
+
+                    // mengirim pesan ke server agar SubsHome dapat mengupdate chat history table
+                    output.writeObject(message);
+                } catch (IOException ex) {
+                    Logger.getLogger(NDPrivChatDialog.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                e.getWindow().dispose();
+            }
+        };
+        
+        addWindowListener(windowAdapter);
     }
 
     /**
@@ -118,7 +155,7 @@ public class NDPrivChatDialog extends javax.swing.JDialog {
         // update text area
         txtareaNDChat.setText(txtareaNDChat.getText() + res + "\n");
     }
-    
+        
     /**
      * Prosedur mendapatkan banyak global friends dari file subslist
      */

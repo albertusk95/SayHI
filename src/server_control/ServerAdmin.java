@@ -391,6 +391,10 @@ public class ServerAdmin extends javax.swing.JFrame {
                             response = "logout~" + pengirim + "~" + text + "~" + kepada + "~\n";
                             send(response);
                             break;
+                        case "updateChatHistTable":
+                            response = "updateChatHistTable~" + pengirim + "~" + "updateChatHistTable" + "~" + kepada + "~\n";
+                            send(response);
+                            break;
                         case "list":
                             response = "list~server~" + getClients() + "~ ~ ~ ~ ~\n";
                             send(response);

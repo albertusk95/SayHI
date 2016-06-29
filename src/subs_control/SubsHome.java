@@ -855,8 +855,9 @@ public class SubsHome extends javax.swing.JFrame {
             }
             
             if (!exist) {
-                NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, username, kepada); 
+                NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, socket, input, output, username, kepada); 
                 ndc.setName(kepada);
+                ndc.setTitle("Off target: " + username + "/" + kepada);
                 ndc.display("", 1);
                 ndc.setVisible(true);
                 NDdialogs.add(ndc);
@@ -892,8 +893,9 @@ public class SubsHome extends javax.swing.JFrame {
             }
             
             if (!exist) {
-                NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, username, kepada); 
+                NDPrivChatDialog ndc = new NDPrivChatDialog(SubsHome.this, socket, input, output, username, kepada); 
                 ndc.setName(kepada);
+                ndc.setTitle("Off target: " + username + "/" + kepada);
                 ndc.display("", 1);
                 ndc.setVisible(true);
                 NDdialogs.add(ndc);
@@ -997,6 +999,10 @@ public class SubsHome extends javax.swing.JFrame {
                                     break;
                                 }
                             }
+                            break;
+                        case "updateChatHistTable":
+                            System.out.println("Update chat history table for " + pengirim);
+                            initChatHistory();
                             break;
                         case "list":
                             System.out.println("Printing list " + text);
